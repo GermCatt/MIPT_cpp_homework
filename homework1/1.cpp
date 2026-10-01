@@ -4,12 +4,11 @@
 int main() {
   int n;
   std::cin >> n;
-  int s;
-  std::cin >> s;
-  int maximum = s;
-  int minimum = s;
-  int under_zero = s < 0 ? 1 : 0;
-  for (int i = 0; i < n - 1; ++i) {
+  int s = 0;
+  int maximum = -999;
+  int minimum = 999;
+  int under_zero = 0;
+  for (int i = 0; i < n; ++i) {
     int temp;
     std::cin >> temp;
     s += temp;
