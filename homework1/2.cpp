@@ -1,6 +1,11 @@
 #include <iostream>
-#include <map>
-#include <string>
+
+using Handler = void (*)(int&);
+
+struct Command {
+  const char* name;
+  Handler run;
+};
 
 void deposit(int& s);
 void withdraw(int& s);
@@ -8,39 +13,43 @@ void balance(int& s);
 void reset(int& s);
 void split(int& s);
 void except(int& s);
-void (*get_or(const std::map<std::string, void (*)(int&)>& cmdlst,
-              const std::string key))(int&);
+bool equal(const char*, const char*);
+Handler get_or(const Command*, const char*, int);
 
 int main() {
-  std::map<std::string, void (*)(int&)> commandMap = {{"deposit", deposit},
-                                                      {"withdraw", withdraw},
-                                                      {"balance", balance},
-                                                      {"reset", reset},
-                                                      {"split", split}};
+  Command commandMap[] = {{"deposit", deposit},
+                          {"withdraw", withdraw},
+                          {"balance", balance},
+                          {"reset", reset},
+                          {"split", split}};
+  const int count = sizeof(commandMap) / sizeof(commandMap[0]);
 
   int s = 0;
-  std::string command;
-  while (std::cin >> command, command != "stop") {
-    void (*usercmd)(int&) = get_or(commandMap, command);
+  char command[16];
+
+  while (true) {
+    std::cin.width(sizeof(command));
+    if (!(std::cin >> command) || equal(command, "stop")) {
+      break;
+    }
+    Handler usercmd = get_or(commandMap, command, count);
     usercmd(s);
   }
   return 0;
 }
 
-void except(int& s) {
+void except(int&) {
   std::cout << "error\n";
+  std::cin.clear();
+  char c;
+  while (std::cin.get(c) && c != '\n') {
+  }
   return;
 }
 
 void deposit(int& s) {
   int k;
-  std::cin >> k;
-  if (std::cin.fail()) {
-    std::cin.clear();
-    std::cin.ignore();
-    return except(s);
-  }
-  if (k <= 0) {
+  if (!(std::cin >> k) || k <= 0) {
     return except(s);
   }
   s += k;
@@ -49,13 +58,7 @@ void deposit(int& s) {
 
 void withdraw(int& s) {
   int k;
-  std::cin >> k;
-  if (std::cin.fail()) {
-    std::cin.clear();
-    std::cin.ignore();
-    return except(s);
-  }
-  if (k <= 0 || k > s) {
+  if (!(std::cin >> k) || k <= 0 || k > s) {
     return except(s);
   }
   s -= k;
@@ -72,26 +75,28 @@ void reset(int& s) {
   return;
 }
 
-void (*get_or(const std::map<std::string, void (*)(int&)>& cmdlst,
-              const std::string key))(int&) {
-  auto it = cmdlst.find(key);
-  if (it != cmdlst.end()) {
-    return it->second;
+Handler get_or(const Command* cmdlst, const char* key, const int size) {
+  for (int i = 0; i < size; ++i) {
+    if (equal(cmdlst[i].name, key)) {
+      return cmdlst[i].run;
+    }
   }
   return except;
 }
 
 void split(int& s) {
   int k;
-  std::cin >> k;
-  if (std::cin.fail()) {
-    std::cin.clear();
-    std::cin.ignore();
+  if (!(std::cin >> k) || k <= 0 || s % k != 0) {
     return except(s);
   }
-  if (s % k == 0 && k > 0) {
-    s /= k;
-    return;
+  s /= k;
+  return;
+}
+
+bool equal(const char* a, const char* b) {
+  int i = 0;
+  while (a[i] != '\0' && a[i] == b[i]) {
+    ++i;
   }
-  return except(s);
+  return a[i] == b[i];
 }
