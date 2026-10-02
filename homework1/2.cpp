@@ -6,6 +6,7 @@ void deposit(int& s);
 void withdraw(int& s);
 void balance(int& s);
 void reset(int& s);
+void split(int& s);
 void except(int& s);
 void (*get_or(const std::map<std::string, void (*)(int&)>& cmdlst,
               const std::string key))(int&);
@@ -14,7 +15,8 @@ int main() {
   std::map<std::string, void (*)(int&)> commandMap = {{"deposit", deposit},
                                                       {"withdraw", withdraw},
                                                       {"balance", balance},
-                                                      {"reset", reset}};
+                                                      {"reset", reset},
+                                                      {"split", split}};
 
   int s = 0;
   std::string command;
@@ -33,6 +35,11 @@ void except(int& s) {
 void deposit(int& s) {
   int k;
   std::cin >> k;
+  if (std::cin.fail()) {
+    std::cin.clear();
+    std::cin.ignore();
+    return except(s);
+  }
   if (k <= 0) {
     return except(s);
   }
@@ -43,6 +50,11 @@ void deposit(int& s) {
 void withdraw(int& s) {
   int k;
   std::cin >> k;
+  if (std::cin.fail()) {
+    std::cin.clear();
+    std::cin.ignore();
+    return except(s);
+  }
   if (k <= 0 || k > s) {
     return except(s);
   }
@@ -67,4 +79,19 @@ void (*get_or(const std::map<std::string, void (*)(int&)>& cmdlst,
     return it->second;
   }
   return except;
+}
+
+void split(int& s) {
+  int k;
+  std::cin >> k;
+  if (std::cin.fail()) {
+    std::cin.clear();
+    std::cin.ignore();
+    return except(s);
+  }
+  if (s % k == 0 && k > 0) {
+    s /= k;
+    return;
+  }
+  return except(s);
 }
