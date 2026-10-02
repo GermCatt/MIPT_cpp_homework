@@ -1,5 +1,5 @@
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
 int main() {
   int n;
@@ -16,7 +16,7 @@ int main() {
     minimum = minimum > temp ? temp : minimum;
     under_zero += temp < 0 ? 1 : 0;
   }
-  float mean = (float) s / n;
+  float mean = (float)s / n;
   std::cout << std::fixed << std::setprecision(1) << mean << std::endl;
   std::cout << minimum << " " << maximum << std::endl;
   std::cout << under_zero << std::endl;
