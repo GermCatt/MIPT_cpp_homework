@@ -1,3 +1,4 @@
+#include <cmath>
 #include <format>
 #include <iostream>
 #include <memory>
@@ -17,24 +18,22 @@ class InvalidArgumentError : public FleetError {
       : FleetError(message) {}
 };
 
+struct CalculationSettings {
+  int days = 10;
+  double tariff = 10.0;
+};
+
+const std::unique_ptr<CalculationSettings> calculationSettings =
+    std::make_unique<CalculationSettings>();
+
 class Item {
-  // Думал о protected, но на лекциях сказали, что аксессорные методы круче
- private:
-  std::string id_;
-  std::string name_;
-
  public:
-  Item(const std::string& id, const std::string& name)
-      : id_(id), name_(name) {};
-
   virtual std::string Describe() const = 0;
 
-  virtual std::string Details(int days = 0, double tariff = 0.0) const {
-    return Describe();
-  }
+  virtual std::string Details() const = 0;
 
-  const std::string& Getid() const { return id_; }
-  const std::string& Getname() const { return name_; }
+  virtual const std::string& GetId() const = 0;
+  virtual const std::string& GetName() const = 0;
 
   virtual double DailyEnergy() const { return 0.0; }
 
@@ -64,33 +63,39 @@ std::ostream& operator<<(std::ostream& os, const Item& item) {
 }
 
 class Transport : public Item {
+  // Думал о protected, но на лекциях сказали, что аксессорные методы круче
  private:
+  std::string id_;
+  std::string name_;
   int noviceScore_;
 
  protected:
   // Функция для реализации творческой части задания
-  virtual std::string ExtraDetails(int days, double tariff) const { return ""; }
+  virtual std::string ExtraDetails() const { return ""; }
 
  public:
   Transport(const std::string& id, const std::string& name, int score)
-      : Item(id, name), noviceScore_(score) {
+      : id_(id), name_(name), noviceScore_(score) {
     if (score < 1 || score > 10) {
       throw InvalidArgumentError("Invalid novice score");
     }
   }
 
-  std::string Describe() const override { return Getid() + " " + Getname(); }
+  const std::string& GetId() const override { return id_; }
+  const std::string& GetName() const override { return name_; }
+
+  std::string Describe() const override { return GetId() + " " + GetName(); }
 
   // Функцию добавил для реализации творческой части задания
   virtual std::string TransportType() const = 0;
 
   // Творческая часть. Функция для подробного вывода информации о ТС.
-  std::string Details(int days = 0, double tariff = 0.0) const override {
+  std::string Details() const override {
     std::string result =
-        "Тип транспорта: " + TransportType() + "\n" + "ID: " + Getid() + "\t" +
-        "Имя: " + Getname() + "\n" +
+        "Тип транспорта: " + TransportType() + "\n" + "ID: " + GetId() + "\t" +
+        "Имя: " + GetName() + "\n" +
         "Простота для новичка: " + std::to_string(noviceScore_) + "\n" +
-        ExtraDetails(days, tariff);
+        ExtraDetails();
     return result;
   }
 
@@ -99,20 +104,13 @@ class Transport : public Item {
   bool RequiresInspection() const override { return true; }
 };
 
-class Bike : public Transport {
- public:
-  Bike(const std::string& id, const std::string& name, int score)
-      : Transport(id, name, score) {}
-  std::string TransportType() const override { return "Велосипед"; }
-};
-
 class EnergyConsumer {
  private:
   double energy_;
 
  public:
   explicit EnergyConsumer(double energy) : energy_(energy) {
-    if (energy < 0.0) {
+    if (!std::isfinite(energy) || energy < 0.0) {
       throw InvalidArgumentError("Invalid energy consume");
     }
   };
@@ -131,7 +129,7 @@ class EnergyConsumer {
 
   // Функцию добавил для реализации творческой части задания
   double EnergyCost(int days, double tariff) const {
-    if (tariff < 0) {
+    if (!std::isfinite(tariff) || tariff < 0) {
       throw InvalidArgumentError("Invalid tariff value");
     }
     return EnergyForDays(days) * tariff;
@@ -140,42 +138,141 @@ class EnergyConsumer {
   virtual ~EnergyConsumer() = default;
 };
 
-class Scooter : public Transport, public EnergyConsumer {
+class ElectricTransport : public Transport, public EnergyConsumer {
  protected:
   // Функция для реализации творческого задания
-  std::string ExtraDetails(int days, double tariff) const override {
-    if (days == 0) {
-      return std::format("Суточное потребление: {:.1f} кВт·ч\n", DailyEnergy());
-    }
+  std::string ExtraDetails() const override {
+    const int days = calculationSettings->days;
+    const double tariff = calculationSettings->tariff;
     return std::format(
         "Суточное потребление: {:.1f} кВт·ч\n"
         "Потребление за {} дней: {:.1f} кВт·ч\n"
         "Стоимость энергии: {:.1f} руб.\n",
-        DailyEnergy(),
-        days,
-        EnergyForDays(days),
-        EnergyCost(days, tariff)
-    );      
+        DailyEnergy(), days, EnergyForDays(days), EnergyCost(days, tariff));
   }
 
  public:
-  Scooter(const std::string& id, const std::string& name, double energy,
-          int score)
+  ElectricTransport(const std::string& id, const std::string& name,
+                    double energy, int score)
       : Transport(id, name, score), EnergyConsumer(energy) {}
 
   double DailyEnergy() const override { return GetEnergy(); }
-
-  std::string TransportType() const override { return "Скутер"; }
 };
 
-int main() {
-  Scooter scooter("S-1", "ModelX", 2.5, 8);
+class Bike : public Transport {
+ public:
+  Bike(const std::string& id, const std::string& name, int score)
+      : Transport(id, name, score) {}
+  std::string TransportType() const override { return "Велосипед"; }
+};
 
-  const Item& item2 = scooter;
+class Scooter : public ElectricTransport {
+ public:
+  Scooter(const std::string& id, const std::string& name, double energy,
+          int score)
+      : ElectricTransport(id, name, energy, score) {}
 
-  std::cout << item2 << '\n';
-  std::cout << item2.DailyEnergy() << '\n';
-  std::cout << item2.IncludeInNoviceList() << '\n';
+  std::string TransportType() const override { return "Электросамокат"; }
+};
 
-  std::cout << scooter.Details(10, 10.0) << '\n';
-}
+class ElectricBike : public ElectricTransport {
+ public:
+  ElectricBike(const std::string& id, const std::string& name, double energy,
+               int score)
+      : ElectricTransport(id, name, energy, score) {}
+
+  std::string TransportType() const override { return "Электровелосипед"; }
+};
+
+class Equipment : public Item {
+ private:
+  std::string id_;
+  std::string name_;
+
+ protected:
+  virtual std::string ExtraDetails() const { return ""; }
+
+ public:
+  Equipment(const std::string& id, const std::string& name)
+      : id_(id), name_(name) {};
+  const std::string& GetId() const override { return id_; }
+  const std::string& GetName() const override { return name_; }
+
+  std::string Describe() const override { return GetId() + " " + GetName(); }
+
+  virtual std::string EquipmentType() const = 0;
+
+  std::string Details() const override {
+    std::string result = "Тип оборудования: " + EquipmentType() + "\n" +
+                         "ID: " + GetId() + "\t" + "Имя: " + GetName() + "\n" +
+                         ExtraDetails();
+    return result;
+  }
+};
+
+class Helmet : public Equipment {
+ private:
+  struct Size {
+   private:
+    std::string size_;
+
+   public:
+    Size(const std::string& size) {
+      if (size != "S" && size != "M" && size != "L" && size != "XL") {
+        throw InvalidArgumentError("Invalid size");
+      }
+      size_ = size;
+    }
+    const std::string& get() const { return size_; }
+  };
+  Size size_;
+
+ protected:
+  std::string ExtraDetails() const override {
+    return "Необходим для новичков!\nРазмер: " + size_.get() + "\n";
+  }
+
+ public:
+  Helmet(const std::string& id, const std::string& name, const std::string size)
+      : Equipment(id, name), size_(size) {};
+
+  std::string EquipmentType() const override { return "Шлем"; }
+};
+
+class ElbowPads : public Equipment {
+ protected:
+  std::string ExtraDetails() const override {
+    return "Необходимы для новичков!\n";
+  }
+
+ public:
+  ElbowPads(const std::string& id, const std::string& name)
+      : Equipment(id, name) {};
+
+  std::string EquipmentType() const override { return "Налокотники"; }
+};
+
+class DocStation : public Equipment, public EnergyConsumer {
+ private:
+  std::string district_;
+
+ protected:
+  std::string ExtraDetails() const override {
+    const int days = calculationSettings->days;
+    const double tariff = calculationSettings->tariff;
+    return std::format(
+        "Станция относится к району: {}\n"
+        "Суточное потребление: {:.1f} кВт·ч\n"
+        "Потребление за {} дней: {:.1f} кВт·ч\n"
+        "Стоимость энергии: {:.1f} руб.\n",
+        district_, DailyEnergy(), days, EnergyForDays(days),
+        EnergyCost(days, tariff));
+  }
+
+ public:
+  DocStation(const std::string& id, const std::string& name, double energy,
+             const std::string& district)
+      : Equipment(id, name), EnergyConsumer(energy), district_(district) {};
+  double DailyEnergy() const override { return GetEnergy(); }
+  std::string EquipmentType() const override { return "Док-станция"; }
+};
