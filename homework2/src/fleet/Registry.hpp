@@ -1,11 +1,11 @@
 #pragma once
 
-#include "items/Inventory.hpp"
-
 #include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "items/Inventory.hpp"
 
 /*
 В целом-то сама по себе идея с Registry мне нравится. Просто я не вижу смысла

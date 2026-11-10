@@ -1,10 +1,10 @@
 #include "fleet/ServiceCenter.hpp"
 
-#include "common/Errors.hpp"
-
 #include <algorithm>
 #include <cctype>
 #include <string>
+
+#include "common/Errors.hpp"
 
 void ServiceCenter::Inspect(const Item& item) const {
   std::string name_lowercase = item.GetName();

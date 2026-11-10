@@ -9,7 +9,6 @@
 #include "common/Errors.hpp"
 #include "fleet/Fleet.hpp"
 
-
 // Класс обработки комманд
 class Commands {
  private:
@@ -58,5 +57,4 @@ class Commands {
   void Details() const;
 
   void Details(int days, double tariff) const;
-
 };

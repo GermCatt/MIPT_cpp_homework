@@ -1,10 +1,10 @@
 #pragma once
 
+#include <string>
+
 #include "common/BoundedValue.hpp"
 #include "items/EnergyConsumer.hpp"
 #include "items/Inventory.hpp"
-
-#include <string>
 
 class Transport : public Item {
  private:
@@ -20,7 +20,8 @@ class Transport : public Item {
   const std::string& GetId() const override;
   const std::string& GetName() const override;
 
-  // Переопределение наше, а строку собирает родитель. Тот самый костыль из Item.
+  // Переопределение наше, а строку собирает родитель. Тот самый костыль из
+  // Item.
   std::string Describe() const override;
 
   // Творческая часть. Функция для подробного вывода информации о ТС.

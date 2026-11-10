@@ -1,10 +1,11 @@
 #include "console/Commands.hpp"
 
-#include "items/EnergyConsumer.hpp"
-
 #include <format>
 
-void Commands::PrintItems(const std::vector<std::weak_ptr<const Item>>& items) const {
+#include "items/EnergyConsumer.hpp"
+
+void Commands::PrintItems(
+    const std::vector<std::weak_ptr<const Item>>& items) const {
   for (const auto& weakItem : items) {
     if (auto item = weakItem.lock()) {
       std::cout << *item << '\n';

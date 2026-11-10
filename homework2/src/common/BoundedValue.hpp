@@ -1,12 +1,12 @@
 #pragma once
 
-#include "common/Errors.hpp"
-
 #include <cmath>
 #include <compare>
 #include <limits>
 #include <string>
 #include <type_traits>
+
+#include "common/Errors.hpp"
 
 /*
 По заданию нужно сделать шаблонный класс и реально его использовать. Авторский

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "items/EnergyConsumer.hpp"
-#include "common/Errors.hpp"
-#include "items/Inventory.hpp"
-
 #include <string>
+
+#include "common/Errors.hpp"
+#include "items/EnergyConsumer.hpp"
+#include "items/Inventory.hpp"
 
 // Класс для фсякой фигни типа шлемов, налокотников и док станций
 class Equipment : public Item {
@@ -16,7 +16,8 @@ class Equipment : public Item {
   const std::string& GetId() const override;
   const std::string& GetName() const override;
 
-  // Переопределение наше, а строку собирает родитель. Тот самый костыль из Item.
+  // Переопределение наше, а строку собирает родитель. Тот самый костыль из
+  // Item.
   std::string Describe() const override;
 
   std::string Details() const override;
@@ -44,7 +45,8 @@ class Helmet : public Equipment {
   std::string ExtraDetails() const override;
 
  public:
-  Helmet(const std::string& id, const std::string& name, const std::string size);
+  Helmet(const std::string& id, const std::string& name,
+         const std::string size);
 
   std::string TypeName() const override;
 };

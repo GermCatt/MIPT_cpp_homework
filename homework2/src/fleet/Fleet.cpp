@@ -1,11 +1,11 @@
 #include "fleet/Fleet.hpp"
 
-#include "items/EnergyConsumer.hpp"
-#include "common/Errors.hpp"
-
 #include <algorithm>
 #include <cmath>
 #include <utility>
+
+#include "common/Errors.hpp"
+#include "items/EnergyConsumer.hpp"
 
 void Fleet::Add(std::unique_ptr<Item> item) {
   if (!item) {
@@ -63,17 +63,16 @@ std::vector<std::weak_ptr<const Item>> Fleet::NoviceList() const {
     throw NoNoviceTransport("No transport for novice");
   }
 
-  std::sort(result.begin(), result.end(),
-            [](const auto& lhs, const auto& rhs) {
-              auto lhs_item = lhs.lock();
-              auto rhs_item = rhs.lock();
+  std::sort(result.begin(), result.end(), [](const auto& lhs, const auto& rhs) {
+    auto lhs_item = lhs.lock();
+    auto rhs_item = rhs.lock();
 
-              if (lhs_item->TypeName() != rhs_item->TypeName()) {
-                return lhs_item->TypeName() < rhs_item->TypeName();
-              }
+    if (lhs_item->TypeName() != rhs_item->TypeName()) {
+      return lhs_item->TypeName() < rhs_item->TypeName();
+    }
 
-              return lhs_item->GetId() < rhs_item->GetId();
-            });
+    return lhs_item->GetId() < rhs_item->GetId();
+  });
   return result;
 }
 
@@ -88,13 +87,12 @@ std::vector<std::weak_ptr<const Item>> Fleet::List() const {
     result.push_back(i);
   }
 
-  std::sort(result.begin(), result.end(),
-            [](const auto& lhs, const auto& rhs) {
-              auto lhs_item = lhs.lock();
-              auto rhs_item = rhs.lock();
+  std::sort(result.begin(), result.end(), [](const auto& lhs, const auto& rhs) {
+    auto lhs_item = lhs.lock();
+    auto rhs_item = rhs.lock();
 
-              return *lhs_item < *rhs_item;
-            });
+    return *lhs_item < *rhs_item;
+  });
   return result;
 }
 

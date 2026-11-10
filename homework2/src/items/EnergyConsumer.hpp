@@ -1,8 +1,8 @@
 #pragma once
 
-#include "common/BoundedValue.hpp"
-
 #include <string>
+
+#include "common/BoundedValue.hpp"
 
 // Общий класс-родитель для всех потребителей энергии
 class EnergyConsumer {

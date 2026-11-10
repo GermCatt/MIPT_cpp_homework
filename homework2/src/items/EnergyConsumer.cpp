@@ -6,7 +6,6 @@
 
 #include "common/Errors.hpp"
 
-
 EnergyConsumer::EnergyConsumer(double energy)
     : energy_(energy, 0, std::numeric_limits<double>::max(),
               "Invalid energy consume") {}

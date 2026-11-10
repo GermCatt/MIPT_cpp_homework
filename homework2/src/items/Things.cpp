@@ -22,7 +22,8 @@ std::string Helmet::ExtraDetails() const {
   return "Необходим для новичков!\nРазмер: " + size_.get() + "\n";
 }
 
-Helmet::Helmet(const std::string& id, const std::string& name, const std::string size)
+Helmet::Helmet(const std::string& id, const std::string& name,
+               const std::string size)
     : Equipment(id, name), size_(size) {}
 
 std::string Helmet::TypeName() const { return "Шлем"; }
@@ -40,8 +41,8 @@ std::string DocStation::ExtraDetails() const {
   return "Станция относится к району: " + district_ + "\n";
 }
 
-DocStation::DocStation(const std::string& id, const std::string& name, double energy,
-           const std::string& district)
+DocStation::DocStation(const std::string& id, const std::string& name,
+                       double energy, const std::string& district)
     : Equipment(id, name), EnergyConsumer(energy), district_(district) {}
 
 double DocStation::DailyEnergy() const { return GetEnergy(); }

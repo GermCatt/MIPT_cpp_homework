@@ -1,9 +1,9 @@
 #include "fleet/Registry.hpp"
 
-#include "common/Errors.hpp"
-
 #include <algorithm>
 #include <utility>
+
+#include "common/Errors.hpp"
 
 bool Registry::Contains(const std::string& id) const {
   for (const auto& i : items_) {
@@ -22,8 +22,7 @@ void Registry::Add(std::shared_ptr<Item> item) {
     throw InvalidArgumentError("Empty ID");
   }
   if (Contains(item->GetId())) {
-    throw InvalidArgumentError(
-        "Duplicate: object with this ID already exists");
+    throw InvalidArgumentError("Duplicate: object with this ID already exists");
   }
 
   items_.push_back(std::move(item));
@@ -49,4 +48,6 @@ void Registry::Remove(const std::string& id) {
 
 size_t Registry::Size() const { return items_.size(); }
 
-const std::vector<std::shared_ptr<Item>>& Registry::GetItems() const { return items_; }
+const std::vector<std::shared_ptr<Item>>& Registry::GetItems() const {
+  return items_;
+}
