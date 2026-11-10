@@ -1,0 +1,4 @@
+build/
+build-*/
+.vsocode
+.clang-format
