@@ -16,29 +16,26 @@ bool Registry::Contains(const std::string& id) const {
 
 void Registry::Add(std::shared_ptr<Item> item) {
   if (!item) {
-    throw InvalidArgumentError("Null item");
+    throw InvalidArgumentError("Не передан объект для добавления.");
   }
   if (item->GetId().empty()) {
-    throw InvalidArgumentError("Empty ID");
+    throw InvalidArgumentError("Инвентарный номер не может быть пустым.");
   }
   if (Contains(item->GetId())) {
-    throw InvalidArgumentError("Duplicate: object with this ID already exists");
+    throw InvalidArgumentError("Объект с ID \"" + item->GetId() +
+                               "\" уже существует.");
   }
 
   items_.push_back(std::move(item));
 }
 
 std::shared_ptr<Item> Registry::Find(const std::string& id) const {
-  if (!Size()) {
-    throw EmptyRegistryError("Registry is empty");
-  }
-
   for (const auto& i : items_) {
     if (i->GetId() == id) {
       return i;
     }
   }
-  throw InvalidArgumentError("Invalid Id: id not in the list");
+  throw InvalidArgumentError("Объект с ID \"" + id + "\" не найден.");
 }
 
 void Registry::Remove(const std::string& id) {

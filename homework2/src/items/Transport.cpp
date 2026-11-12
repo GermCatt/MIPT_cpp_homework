@@ -3,7 +3,9 @@
 std::string Transport::ExtraDetails() const { return ""; }
 
 Transport::Transport(const std::string& id, const std::string& name, int score)
-    : Item(id, name), noviceScore_(score, 1, 10, "Invalid novice score") {}
+    : Item(id, name),
+      noviceScore_(score, 1, 10,
+                   "Оценка пригодности для новичка должна быть от 1 до 10.") {}
 
 const std::string& Transport::GetId() const { return Item::GetId(); }
 

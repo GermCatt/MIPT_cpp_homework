@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "common/Errors.hpp"
+#include "console/ConsoleOutput.hpp"
 #include "fleet/Fleet.hpp"
 
 // Класс обработки комманд
@@ -26,7 +27,7 @@ class Commands {
     try {
       fleet_.Add(std::make_unique<T>(std::forward<Args>(args)...));
     } catch (const FleetError& e) {
-      std::cout << "error: " << e.what() << '\n';
+      ConsoleOutput::Error(e.what());
     }
   }
   /*

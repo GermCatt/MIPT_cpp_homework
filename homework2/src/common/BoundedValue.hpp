@@ -38,7 +38,7 @@ class BoundedValue {
   // Ещё один конструктор для применения неявных преобразований
   BoundedValue(T value)
       : BoundedValue(value, T{0}, std::numeric_limits<T>::max(),
-                     "Invalid value") {}
+                     "Значение вне допустимого диапазона.") {}
 
   T Get() const { return value_; }
 
@@ -68,7 +68,7 @@ class BoundedValue {
     requires std::is_arithmetic_v<U>
   auto operator/(U rhs) const {
     if (rhs == 0) {
-      throw InvalidArgumentError("Division by zero");
+      throw InvalidArgumentError("Деление на ноль недопустимо.");
     }
     return value_ / rhs;
   }

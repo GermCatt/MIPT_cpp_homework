@@ -2,6 +2,7 @@
 
 #include <format>
 
+#include "console/ConsoleOutput.hpp"
 #include "items/EnergyConsumer.hpp"
 
 void Commands::PrintItems(
@@ -15,13 +16,13 @@ void Commands::PrintItems(
 
 void Commands::Remove() {
   if (!fleet_.FocusWasSet()) {
-    std::cout << "Витрина ещё не установлена\n";
+    ConsoleOutput::Message("Витрина ещё не установлена.");
     return;
   }
 
   auto item = fleet_.GetFocus().lock();
   if (!item) {
-    std::cout << "removed\n";
+    ConsoleOutput::Removed();
     return;
   }
 
@@ -35,71 +36,66 @@ void Commands::Remove() {
 void Commands::Remove(const std::string& id) {
   try {
     fleet_.Remove(id);
-  } catch (const EmptyRegistryError&) {
-    std::cout << "Парк пуст\n";
-  } catch (const InvalidArgumentError&) {
-    std::cout << "Объект с ID " << id << " не найден\n";
+    ConsoleOutput::Message("Объект удалён");
   } catch (const FleetError& e) {
-    std::cout << "error: " << e.what() << '\n';
+    ConsoleOutput::Error(e.what());
   }
 }
 
 void Commands::List() const {
   try {
     PrintItems(fleet_.List());
-  } catch (const EmptyRegistryError&) {
-    std::cout << "Парк пуст\n";
+  } catch (const EmptyRegistryError& e) {
+    ConsoleOutput::Message(e.what());
   } catch (const FleetError& e) {
-    std::cout << "error: " << e.what() << '\n';
+    ConsoleOutput::Error(e.what());
   }
 }
 
 void Commands::NoviceList() const {
   try {
     PrintItems(fleet_.NoviceList());
-  } catch (const EmptyRegistryError&) {
-    std::cout << "Парк пуст\n";
-  } catch (const NoNoviceTransport&) {
-    std::cout << "Нет транспорта, подходящего для новичков\n";
+  } catch (const EmptyRegistryError& e) {
+    ConsoleOutput::Message(e.what());
+  } catch (const NoNoviceTransport& e) {
+    ConsoleOutput::Message(e.what());
   } catch (const FleetError& e) {
-    std::cout << "error: " << e.what() << '\n';
+    ConsoleOutput::Error(e.what());
   }
 }
 
 void Commands::Focus(const std::string& id) {
   try {
     fleet_.Focus(id);
-  } catch (const EmptyRegistryError&) {
-    std::cout << "Парк пуст\n";
-  } catch (const InvalidArgumentError&) {
-    std::cout << "Объект с ID " << id << " не найден\n";
   } catch (const FleetError& e) {
-    std::cout << "error: " << e.what() << '\n';
+    ConsoleOutput::Error(e.what());
   }
 }
 
 void Commands::ShowFocus() const {
   if (!fleet_.FocusWasSet()) {
-    std::cout << "Витрина ещё не установлена\n";
+    ConsoleOutput::Message("Витрина ещё не установлена.");
     return;
   }
 
   if (auto item = fleet_.GetFocus().lock()) {
     std::cout << *item << '\n';
   } else {
-    std::cout << "removed\n";
+    ConsoleOutput::Removed();
   }
 }
 
 void Commands::Energy() const {
   try {
     std::cout << std::format("{:.1f} кВт·ч\n", fleet_.DailyEnergy());
-  } catch (const NoEnergyConsumers&) {
-    std::cout << "В парке нет потребителей энергии\n0.0 кВт·ч\n";
-  } catch (const EmptyRegistryError&) {
-    std::cout << "Парк пуст\n0.0 кВт·ч\n";
+  } catch (const NoEnergyConsumers& e) {
+    ConsoleOutput::Message(e.what());
+    std::cout << "0.0 кВт·ч\n";
+  } catch (const EmptyRegistryError& e) {
+    ConsoleOutput::Message(e.what());
+    std::cout << "0.0 кВт·ч\n";
   } catch (const FleetError& e) {
-    std::cout << "error: " << e.what() << '\n';
+    ConsoleOutput::Error(e.what());
   }
 }
 
@@ -107,7 +103,7 @@ void Commands::Count() const { std::cout << fleet_.Size() << '\n'; }
 
 void Commands::Details() const {
   if (!fleet_.FocusWasSet()) {
-    std::cout << "Витрина ещё не установлена\n";
+    ConsoleOutput::Message("Витрина ещё не установлена.");
     return;
   }
 
@@ -119,13 +115,13 @@ void Commands::Details() const {
                                consumer->DailyEnergy());
     }
   } else {
-    std::cout << "removed\n";
+    ConsoleOutput::Removed();
   }
 }
 
 void Commands::Details(int days, double tariff) const {
   if (!fleet_.FocusWasSet()) {
-    std::cout << "Витрина ещё не установлена\n";
+    ConsoleOutput::Message("Витрина ещё не установлена.");
     return;
   }
 
@@ -135,12 +131,12 @@ void Commands::Details(int days, double tariff) const {
         const auto energyDetails = consumer->EnergyDetails(days, tariff);
         std::cout << item->Details() << '\n' << energyDetails;
       } catch (const FleetError& e) {
-        std::cout << "error: " << e.what() << '\n';
+        ConsoleOutput::Error(e.what());
       }
     } else {
-      throw InvalidArgumentError("Object does not consume energy");
+      throw InvalidArgumentError("Выбранный объект не потребляет энергию.");
     }
   } else {
-    std::cout << "removed\n";
+    ConsoleOutput::Removed();
   }
 }

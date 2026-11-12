@@ -9,7 +9,7 @@
 
 void Fleet::Add(std::unique_ptr<Item> item) {
   if (!item) {
-    throw InvalidArgumentError("Null item");
+    throw InvalidArgumentError("Не передан объект для добавления.");
   }
 
   if (item->RequiresInspection()) {
@@ -23,7 +23,7 @@ std::size_t Fleet::Size() const { return registry_.Size(); }
 
 long double Fleet::DailyEnergy() const {
   if (!registry_.Size()) {
-    throw EmptyRegistryError("Fleet is empty");
+    throw EmptyRegistryError("Парк пуст.");
   }
 
   std::size_t consumersCount = 0;
@@ -38,10 +38,10 @@ long double Fleet::DailyEnergy() const {
   }
 
   if (consumersCount == 0) {
-    throw NoEnergyConsumers("No energy consumers in fleet");
+    throw NoEnergyConsumers("В парке нет потребителей энергии.");
   }
   if (!std::isfinite(result)) {
-    throw EnergyCalculationError("Fleet energy calculation overflow");
+    throw EnergyCalculationError("Переполнение при расчёте энергии парка.");
   }
 
   return result;
@@ -49,7 +49,7 @@ long double Fleet::DailyEnergy() const {
 
 std::vector<std::weak_ptr<const Item>> Fleet::NoviceList() const {
   if (!registry_.Size()) {
-    throw EmptyRegistryError("Fleet is empty");
+    throw EmptyRegistryError("Парк пуст.");
   }
 
   std::vector<std::weak_ptr<const Item>> result;
@@ -60,7 +60,7 @@ std::vector<std::weak_ptr<const Item>> Fleet::NoviceList() const {
     }
   }
   if (result.empty()) {
-    throw NoNoviceTransport("No transport for novice");
+    throw NoNoviceTransport("Нет транспорта, подходящего для новичков.");
   }
 
   std::sort(result.begin(), result.end(), [](const auto& lhs, const auto& rhs) {
@@ -78,7 +78,7 @@ std::vector<std::weak_ptr<const Item>> Fleet::NoviceList() const {
 
 std::vector<std::weak_ptr<const Item>> Fleet::List() const {
   if (!registry_.Size()) {
-    throw EmptyRegistryError("Fleet is empty");
+    throw EmptyRegistryError("Парк пуст.");
   }
 
   std::vector<std::weak_ptr<const Item>> result;
@@ -97,9 +97,6 @@ std::vector<std::weak_ptr<const Item>> Fleet::List() const {
 }
 
 void Fleet::Focus(const std::string& id) {
-  if (!registry_.Size()) {
-    throw EmptyRegistryError("Registry is empty");
-  }
   focus_ = registry_.Find(id);
   focusWasSet_ = true;
 }
@@ -108,9 +105,4 @@ std::weak_ptr<const Item> Fleet::GetFocus() const { return focus_; }
 
 bool Fleet::FocusWasSet() const { return focusWasSet_; }
 
-void Fleet::Remove(const std::string& id) {
-  if (!registry_.Size()) {
-    throw EmptyRegistryError("Registry is empty");
-  }
-  registry_.Remove(id);
-}
+void Fleet::Remove(const std::string& id) { registry_.Remove(id); }

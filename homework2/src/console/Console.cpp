@@ -1,26 +1,58 @@
 #include "console/Console.hpp"
 
 #include <iostream>
+#include <string_view>
+#include <utility>
 
 #include "common/Errors.hpp"
+#include "console/ConsoleOutput.hpp"
 #include "items/Things.hpp"
 #include "items/Transport.hpp"
 
-// Ограничиваем область видмости функции чтения числа.
-// Она должна использоваться только здесь
+// Внутренние помощники разбора команд используются только в этом файле.
 namespace {
+enum class Command {
+  Add,
+  Remove,
+  List,
+  Novice,
+  Energy,
+  Count,
+  Focus,
+  ShowFocus,
+  Details,
+  Quit
+};
+
+Command ParseCommand(std::string_view name) {
+  constexpr std::pair<std::string_view, Command> commands[] = {
+      {"add", Command::Add},         {"remove", Command::Remove},
+      {"list", Command::List},       {"novice", Command::Novice},
+      {"energy", Command::Energy},   {"count", Command::Count},
+      {"focus", Command::Focus},     {"show_focus", Command::ShowFocus},
+      {"details", Command::Details}, {"quit", Command::Quit},
+  };
+
+  for (const auto& [text, command] : commands) {
+    if (name == text) {
+      return command;
+    }
+  }
+  throw InvalidArgumentError("Неизвестная команда.");
+}
+
 template <typename T>
 T ReadNumber(std::istringstream& input) {
   std::string token;
   if (!(input >> token)) {
-    throw InvalidArgumentError("invalid command syntax");
+    throw InvalidArgumentError("Неверный формат команды.");
   }
 
   // Читаем число целиком: один аргумент вроде 30.5 нельзя разбить на 30 и .5.
   std::istringstream number(token);
   T value;
   if (!(number >> value) || !number.eof()) {
-    throw InvalidArgumentError("invalid command syntax");
+    throw InvalidArgumentError("Неверный формат команды.");
   }
   return value;
 }
@@ -39,7 +71,7 @@ bool Console::Execute(const std::string& line) {
   try {
     return ExecuteCommand(line);
   } catch (const FleetError& e) {
-    std::cout << "error: " << e.what() << '\n';
+    ConsoleOutput::Error(e.what());
     return true;
   }
 }
@@ -47,8 +79,8 @@ bool Console::Execute(const std::string& line) {
 bool Console::ExecuteCommand(const std::string& line) {
   std::istringstream iss(line);
 
-  std::string command;
-  if (!(iss >> command)) {
+  std::string commandName;
+  if (!(iss >> commandName)) {
     return true;
   }
 
@@ -57,87 +89,86 @@ bool Console::ExecuteCommand(const std::string& line) {
     return !(iss >> extra);
   };
 
-  if (command == "add") {
-    ParseAdd(iss);
-  }
+  switch (ParseCommand(commandName)) {
+    case Command::Add:
+      ParseAdd(iss);
+      break;
 
-  else if (command == "remove") {
-    std::string id;
+    case Command::Remove: {
+      std::string id;
 
-    if (iss >> id) {
-      if (!noExtraArgs()) {
-        throw InvalidArgumentError("invalid command syntax");
+      if (iss >> id) {
+        if (!noExtraArgs()) {
+          throw InvalidArgumentError("Неверный формат команды.");
+        }
+        commands_.Remove(id);
+      } else {
+        commands_.Remove();
       }
-      commands_.Remove(id);
-    } else {
-      commands_.Remove();
-    }
-  }
-
-  else if (command == "list") {
-    if (!noExtraArgs()) {
-      throw InvalidArgumentError("invalid command syntax");
+      break;
     }
 
-    commands_.List();
-  }
+    case Command::List:
+      if (!noExtraArgs()) {
+        throw InvalidArgumentError("Неверный формат команды.");
+      }
 
-  else if (command == "novice") {
-    if (!noExtraArgs()) {
-      throw InvalidArgumentError("invalid command syntax");
+      commands_.List();
+      break;
+
+    case Command::Novice:
+      if (!noExtraArgs()) {
+        throw InvalidArgumentError("Неверный формат команды.");
+      }
+
+      commands_.NoviceList();
+      break;
+
+    case Command::Energy:
+      if (!noExtraArgs()) {
+        throw InvalidArgumentError("Неверный формат команды.");
+      }
+
+      commands_.Energy();
+      break;
+
+    case Command::Count:
+      if (!noExtraArgs()) {
+        throw InvalidArgumentError("Неверный формат команды.");
+      }
+
+      commands_.Count();
+      break;
+
+    case Command::Focus: {
+      std::string id;
+
+      if (!(iss >> id) || !noExtraArgs()) {
+        throw InvalidArgumentError("Неверный формат команды.");
+      }
+
+      commands_.Focus(id);
+      break;
     }
 
-    commands_.NoviceList();
-  }
+    case Command::ShowFocus:
+      if (!noExtraArgs()) {
+        throw InvalidArgumentError("Неверный формат команды.");
+      }
 
-  else if (command == "energy") {
-    if (!noExtraArgs()) {
-      throw InvalidArgumentError("invalid command syntax");
-    }
+      commands_.ShowFocus();
+      break;
 
-    commands_.Energy();
-  }
+    case Command::Details:
+      ParseDetails(iss);
+      break;
 
-  else if (command == "count") {
-    if (!noExtraArgs()) {
-      throw InvalidArgumentError("invalid command syntax");
-    }
+    case Command::Quit:
+      if (!noExtraArgs()) {
+        throw InvalidArgumentError("Неверный формат команды.");
+      }
 
-    commands_.Count();
-  }
-
-  else if (command == "focus") {
-    std::string id;
-
-    if (!(iss >> id) || !noExtraArgs()) {
-      throw InvalidArgumentError("invalid command syntax");
-    }
-
-    commands_.Focus(id);
-  }
-
-  else if (command == "show_focus") {
-    if (!noExtraArgs()) {
-      throw InvalidArgumentError("invalid command syntax");
-    }
-
-    commands_.ShowFocus();
-  }
-
-  else if (command == "details") {
-    ParseDetails(iss);
-  }
-
-  else if (command == "quit") {
-    if (!noExtraArgs()) {
-      throw InvalidArgumentError("invalid command syntax");
-    }
-
-    return false;
-  }
-
-  else {
-    throw InvalidArgumentError("unknown command");
+      return false;
   }
   return true;
 }
@@ -153,7 +184,7 @@ void Console::ParseAdd(std::istringstream& iss) {
   std::string name;
 
   if (!(iss >> type >> id >> name)) {
-    throw InvalidArgumentError("invalid command syntax");
+    throw InvalidArgumentError("Неверный формат команды.");
   }
 
   if (type == "scooter") {
@@ -161,7 +192,7 @@ void Console::ParseAdd(std::istringstream& iss) {
     const int score = ReadNumber<int>(iss);
 
     if (!noExtraArgs()) {
-      throw InvalidArgumentError("invalid command syntax");
+      throw InvalidArgumentError("Неверный формат команды.");
     }
 
     commands_.Add<Scooter>(id, name, energy, score);
@@ -171,7 +202,7 @@ void Console::ParseAdd(std::istringstream& iss) {
     const int score = ReadNumber<int>(iss);
 
     if (!noExtraArgs()) {
-      throw InvalidArgumentError("invalid command syntax");
+      throw InvalidArgumentError("Неверный формат команды.");
     }
 
     commands_.Add<Bike>(id, name, score);
@@ -182,7 +213,7 @@ void Console::ParseAdd(std::istringstream& iss) {
     const int score = ReadNumber<int>(iss);
 
     if (!noExtraArgs()) {
-      throw InvalidArgumentError("invalid command syntax");
+      throw InvalidArgumentError("Неверный формат команды.");
     }
 
     commands_.Add<ElectricBike>(id, name, energy, score);
@@ -192,7 +223,7 @@ void Console::ParseAdd(std::istringstream& iss) {
     std::string size;
 
     if (!(iss >> size) || !noExtraArgs()) {
-      throw InvalidArgumentError("invalid command syntax");
+      throw InvalidArgumentError("Неверный формат команды.");
     }
 
     commands_.Add<Helmet>(id, name, size);
@@ -203,7 +234,7 @@ void Console::ParseAdd(std::istringstream& iss) {
     std::string district;
 
     if (!(iss >> district) || !noExtraArgs()) {
-      throw InvalidArgumentError("invalid command syntax");
+      throw InvalidArgumentError("Неверный формат команды.");
     }
 
     commands_.Add<DocStation>(id, name, energy, district);
@@ -211,14 +242,14 @@ void Console::ParseAdd(std::istringstream& iss) {
 
   else if (type == "elbowpads") {
     if (!noExtraArgs()) {
-      throw InvalidArgumentError("invalid command syntax");
+      throw InvalidArgumentError("Неверный формат команды.");
     }
 
     commands_.Add<ElbowPads>(id, name);
   }
 
   else {
-    throw InvalidArgumentError("unknown item type");
+    throw InvalidArgumentError("Неизвестный тип объекта.");
   }
 }
 
@@ -233,7 +264,7 @@ void Console::ParseDetails(std::istringstream& iss) {
   const double tariff = ReadNumber<double>(iss);
   std::string extra;
   if (iss >> extra) {
-    throw InvalidArgumentError("invalid command syntax");
+    throw InvalidArgumentError("Неверный формат команды.");
   }
   commands_.Details(days, tariff);
 }

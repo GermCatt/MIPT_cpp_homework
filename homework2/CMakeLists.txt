@@ -13,6 +13,7 @@ add_executable(fleet
     src/fleet/Fleet.cpp
     src/console/Commands.cpp
     src/console/Console.cpp
+    src/console/ConsoleOutput.cpp
     src/items/Inventory.hpp
     src/items/Transport.hpp
     src/items/EnergyConsumer.hpp
@@ -22,6 +23,7 @@ add_executable(fleet
     src/fleet/Fleet.hpp
     src/console/Commands.hpp
     src/console/Console.hpp
+    src/console/ConsoleOutput.hpp
     src/common/BoundedValue.hpp
     src/common/Errors.hpp
 )

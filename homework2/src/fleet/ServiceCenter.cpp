@@ -12,6 +12,7 @@ void ServiceCenter::Inspect(const Item& item) const {
                  name_lowercase.begin(),
                  [](unsigned char c) { return std::tolower(c); });
   if (name_lowercase.find("broken") != std::string::npos) {
-    throw InspectionRejectedError("Inspection failed: transport is broken");
+    throw InspectionRejectedError(
+        "Техосмотр не пройден: транспорт неисправен.");
   }
 }

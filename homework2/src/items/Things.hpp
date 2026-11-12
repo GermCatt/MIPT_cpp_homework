@@ -33,7 +33,7 @@ class Helmet : public Equipment {
    public:
     Size(const std::string& size) {
       if (size != "S" && size != "M" && size != "L" && size != "XL") {
-        throw InvalidArgumentError("Invalid size");
+        throw InvalidArgumentError("Размер шлема должен быть S, M, L или XL.");
       }
       size_ = size;
     }
